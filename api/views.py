@@ -5,7 +5,7 @@ from rest_framework.reverse import reverse
 from rest_framework.decorators import api_view
 from rest_framework import generics
 
-class PostListCreateView(generics.ListAPIView):
+class PostListCreateView(generics.ListCreateAPIView):
     serializer_class = PostSerializer
 
     def get_queryset(self):
@@ -13,6 +13,10 @@ class PostListCreateView(generics.ListAPIView):
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
+
+class AllUserListView(generics.ListAPIView):
+    serializer_class = PostSerializer
+    queryset = Post.objects.all()
 
 class UserListView(generics.ListAPIView):
     serializer_class = UserSerializer
@@ -24,11 +28,22 @@ class FollowListCreateView(generics.ListAPIView):
     def get_queryset(self):
         return self.request.user.follows_from
 
+@api_view(['GET', 'PUT', 'DELETE'])
+def post_detail(request, id):
+    """
+    Retrieve, update or delete a code post.
+    """
+    try:
+        post = Post.objects.get(id=id)
+    except Post.DoesNotExist:
+        return Response(serializer.data)
 
-
-@api_view(['GET'])
-def api_root(request, format=None):
-    return Response({
-        'users': reverse('posts', request=request, format=format),
-        'posts': reverse('users', request=request, format=format)
-    })
+    if request.method == 'GET':
+        serializer = PostSerializer(post)
+        return Response(serializer.data)
+# @api_view(['GET'])
+# def api_root(request, format=None):
+#     return Response({
+#         'users': reverse('posts', request=request, format=format),
+#         'posts': reverse('users', request=request, format=format)
+#     })
